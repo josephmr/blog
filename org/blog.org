@@ -1,0 +1,15 @@
+#+HUGO_BASE_DIR: ../
+#+HUGO_SECTION: posts
+
+# Add a post e.g.
+#
+# ** Test Post                                                       :hugo:org:
+#    :PROPERTIES:
+#    :EXPORT_FILE_NAME: test-post-slug
+#    :EXPORT_DATE: 2021-04-12
+#    :EXPORT_DESCRIPTION: Short post description
+#    :END:
+#
+# *** First heading in post
+#
+#     Post content

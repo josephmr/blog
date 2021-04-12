@@ -1,0 +1,30 @@
+baseURL = "https://blog.fortruce.com/"
+languageCode = "en-us"
+title = "Joseph Rollins"
+theme = "hugo-theme-tokiwa"
+
+[params]
+description = """
+Bits and pieces
+"""
+mainSections = ["posts"]
+useChineseFonts = false
+
+[menu]
+[[menu.main]]
+identifier = "posts"
+name = "Posts"
+url = "/post/"
+weight = 1
+
+[[menu.main]]
+identifier = "Tags"
+name = "Tags"
+url = "/tags/"
+weight = 1
+
+[[menu.main]]
+identifier = "Categories"
+name = "Categories"
+url = "/categories/"
+weight = 2
