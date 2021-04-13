@@ -1,11 +1,11 @@
 baseURL = "https://blog.fortruce.com/"
 languageCode = "en-us"
-title = "Joseph Rollins"
+title = "fortruce"
 theme = "hugo-theme-tokiwa"
 
 [params]
 description = """
-Bits and pieces
+bits and pieces
 """
 mainSections = ["posts"]
 useChineseFonts = false
