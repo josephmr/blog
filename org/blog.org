@@ -3,7 +3,7 @@
 
 # Add a post e.g.
 #
-# ** Test Post                                                   :hugo:org:
+# ** Test Post :hugo:org:
 #    :PROPERTIES:
 #    :EXPORT_FILE_NAME: test-post-slug
 #    :EXPORT_DATE: 2021-04-12
@@ -14,141 +14,216 @@
 #
 #     Post content
 
-* ClojureScript                                              :@clojurescript:
+* Meta
+
+** TODO Filter "tip" posts out of homepage
+
+** TODO Fix timestamps to not include time
+
+* Post Ideas 
+
+** Passing data between Firebase functions cljs->js->cljs
+
+** Writing and reading data from Firestore cljs->js->cljs
+
+** TODO Write tip post about binding org-insert-structure-template
+
+* Emacs :@emacs:
+
+** Auto fill in org-mode                                                  :tip:
+:PROPERTIES:
+:EXPORT_FILE_NAME: tip-auto-fill-org-mode
+:EXPORT_DATE: <2021-04-15 Thu>
+:EXPORT_DESCRIPTION: Set auto-fill-mode to wrap columns in org-mode.
+:END:
+
+When writing in org-mode I want my lines to automatically break when I reach a
+certain column limit.
+
+*** org-fill-paragraph
+
+My first solution was to call ~org-fill-paragraph~, bound to ~M-q~ for each
+paragraph or region I wanted to fix. This achieves the desired effect and the
+length of lines can be configured via the ~fill-column~ variable:
+
+#+begin_quote
+Column beyond which automatic line-wrapping should happen.
+
+It is used by filling commands, such as fill-region and fill-paragraph,
+and by auto-fill-mode, which see.
+#+end_quote
+
+Manually calling this to fix paragraphs or regions was becoming annoying, luckily
+there is a way to automate it.
+
+*** auto-fill-mode
+
+The ~auto-fill-mode~ function can be used to toggle auto fill mode for a buffer.
+
+#+begin_quote
+Toggle automatic line breaking (Auto Fill mode).
+
+When Auto Fill mode is enabled, inserting a space at a column
+beyond current-fill-column automatically breaks the line at a
+previous space.
+#+end_quote
+
+All that is needed is to enable this for org-mode via a hook so it affects all
+org-mode buffers. The documentation for the ~auto-fill-mode~ function specified
+to pass a positive value to enable:
+
+#+begin_quote
+If called interactively, toggle Auto-Fill mode.  If the prefix
+argument is positive, enable the mode, and if it is zero or negative,
+disable the mode.
+#+end_quote
+
+I use Doom so you may need to adjust your command slightly based on your configuration.
+
+#+begin_src elisp
+(add-hook! org-mode
+           (auto-fill-mode 1))
+#+end_src
+
+Now line breaks are automatically inserted as I type in org-mode buffers. It is
+still occassionally necessary to manually call ~org-fill-paragraph~ when
+editing; however, this covers the majority of the cases.
+
+
+* ClojureScript :@clojurescript:
 
 ** Firebase Functions in ClojureScript
-   :PROPERTIES:
-   :EXPORT_FILE_NAME: firebase-functions-clojurescript
-   :EXPORT_DATE: 2021-04-12
-   :EXPORT_DESCRIPTION: Use ClojureScript to write your Firebase Functions.
-   :END:
+:PROPERTIES:
+:EXPORT_FILE_NAME: firebase-functions-clojurescript
+:EXPORT_DATE: <2021-04-12 Mon>
+:EXPORT_DESCRIPTION: Use ClojureScript to write your Firebase Functions.
+:END:
 
-   As I started on a less trivial project to learn ClojureScript more via
-   re-frame I reached for Google Cloud Firestore as a simple database. I
-   generally use Firestore when prototyping as I am familiar with it and it
-   requires minimal setup.
+As I started on a less trivial project to learn ClojureScript more via
+re-frame I reached for Google Cloud Firestore as a simple database. I
+generally use Firestore when prototyping as I am familiar with it and it
+requires minimal setup.
 
-   It is common when using Firestore to leverage Firebase Functions to control
-   some writes to the database. For example, to prevent cheating I used a
-   Firebase Function to validate moves being played in a tic-tac-toe game.
+It is common when using Firestore to leverage Firebase Functions to control
+some writes to the database. For example, to prevent cheating I used a
+Firebase Function to validate moves being played in a tic-tac-toe game.
 
-   Instead of writing the functions in Javascript or Typescript, it is possible
-   to write them in ClojureScript and compile to Javascript pretty easily.
+Instead of writing the functions in Javascript or Typescript, it is possible
+to write them in ClojureScript and compile to Javascript pretty easily.
 
 *** Create a shadow-cljs Project
 
-    To get started we will initialize a new Shadow CLJS project. Shadow CLJS
-    (shadow-cljs) is responsible for compiling our ClojureScript and leveraging
-    existing Javascript libraries (e.g. firebase-functions).
+To get started we will initialize a new shadow cljs project. shadow cljs
+(shadow-cljs) is responsible for compiling our clojurescript and leveraging
+existing Javascript libraries (e.g. firebase-functions).
 
-    #+begin_src bash
-      npx create-cljs-project echo
-    #+end_src
-    
-    This should generate the following project for us:
+#+begin_src bash
+npx create-cljs-project echo
+#+end_src
 
-    #+begin_src sh
-      ➜  src tree -I node_modules echo
-      echo
-      ├── package.json
-      ├── package-lock.json
-      ├── shadow-cljs.edn
-      └── src
-          ├── main
-          └── test
-    #+end_src
+This should generate the following project for us:
 
-    
+#+begin_src sh
+➜ src tree -I node_modules echo
+echo
+├── package.json
+├── package-lock.json
+├── shadow-cljs.edn
+└── src
+    ├── main
+    └── test
+#+end_src
+
 *** Initialize Firebase Functions
 
-    Now we need to initialize Firebase in the directory and configure it for writing functions.
+Now we need to initialize Firebase in the directory and configure it for writing functions.
 
-    #+begin_src sh
-      firebase init
-      # choose Functions
-      # choose a GCP project
-      # choose Javascript
-      # decline EsLint
-    #+end_src
+#+begin_src sh
+firebase init
+# choose Functions
+# choose a GCP project
+# choose Javascript
+# decline EsLint
+#+end_src
 
-    This will create a new ~functions~ directory with a ~package.json~ file for
-    our functions Javascript dependencies and a basic ~index.js~ file which we
-    won't be using.
+This will create a new ~functions~ directory with a ~package.json~ file for
+our functions Javascript dependencies and a basic ~index.js~ file which we
+won't be using.
 
 *** Write our ClojureScript
 
-    Let's write a basic function in ~src/main/echo/fn.cljs~. This will be the
-    function we deploy to Firebase.
+Let's write a basic function in ~src/main/echo/fn.cljs~. This will be the
+function we deploy to Firebase.
 
-    #+begin_src clojure
-      (ns echo.fn
-        (:require ["firebase-functions" :as functions]
-                  ["firebase-admin" :as admin]))
+#+begin_src clojure
+(ns echo.fn
+  (:require ["firebase-functions" :as functions]
+            ["firebase-admin" :as admin]))
 
-      (defn echo
-        "Echo the passed in query parameters merged with the current time"
-        [req res]
-        (let [query (js->clj (.-query req) :keywordize-keys true)]
-          (.json res (clj->js {:time (.toString (js/Date.))
-                               :query query}))))
+(defonce init (.initializeApp admin))
 
-      (def exports
-        "Configure exports that Firebase expects (i.e. module.exports)"
-        #js {:echo (.onRequest functions/https echo)})
-    #+end_src
+(defn echo
+  "Echo the passed in query parameters merged with the current time"
+  [req res]
+  (let [query (js->clj (.-query req) :keywordize-keys true)]
+    (.json res (clj->js {:time (.toString (js/Date.))
+                         :query query}))))
 
-    First, we import the ~firebase-functions~ and ~firebase-admin~ Javascript
-    packages. These dependencies, and all of our other Javascript dependencies
-    are declared in ~functions/package.json~.
+(def exports
+  "Configure exports that Firebase expects (i.e. module.exports)"
+  #js {:echo (.onRequest functions/https echo)})
+#+end_src
 
-    Next, we have a relatively simple ~echo~ function. As this functions is
-    using the Firebase ~onRequest~ function style we expect to receive a
-    ~request~ and ~response~ object as parameters.
+First, we import the ~firebase-functions~ and ~firebase-admin~ Javascript
+packages. These dependencies, and all of our other Javascript dependencies
+are declared in ~functions/package.json~.
 
-    We decode the query parameters from the request, converting into
-    ClojureScript data structures via ~js->clj~. Then, we call ~res.json~ to
-    send back the current time and the passed query parameters. The inverse
-    conversion, ~clj->js~ is used to return Javascript data structures back.
+Next, we have a relatively simple ~echo~ function. As this functions is
+using the Firebase ~onRequest~ function style we expect to receive a
+~request~ and ~response~ object as parameters.
 
-    Finally, we expose the ~echo~ function in the module exports.
+We decode the query parameters from the request, converting into
+ClojureScript data structures via ~js->clj~. Then, we call ~res.json~ to
+send back the current time and the passed query parameters. The inverse
+conversion, ~clj->js~ is used to return Javascript data structures back.
+
+Finally, we expose the ~echo~ function in the module exports.
 
 *** Compile our ClojureScript
 
-    Now we just need to configure Shadow CLJS to correctly compile our
-    ClojureScript. Edit the ~shadow-cljs.edn~ file to match the following.
+Now we just need to configure Shadow CLJS to correctly compile our
+ClojureScript. Edit the ~shadow-cljs.edn~ file to match the following.
 
-    #+begin_src clojure
-      {:source-paths
-       ["src/dev"
-        "src/main"
-        "src/test"]
+#+begin_src clojure
+{:source-paths
+ ["src/main"]
 
-       :dependencies
-       []
+ :dependencies
+ []
 
-       :builds
-       {:fn {:target           :node-library
-             :js-options       {:js-package-dirs ["functions/node_modules"]}
-             :compiler-options {:infer-externs :auto}
-             :output-to        "functions/index.js"
-             :exports-var      echo.fn/exports}}}
-    #+end_src
+ :builds
+ {:fn {:target :node-library
+       :js-options {:js-package-dirs ["functions/node_modules"]}
+       :compiler-options {:infer-externs :auto}
+       :output-to "functions/index.js"
+       :exports-var echo.fn/exports}}}
+#+end_src
 
-    We add a new build ~:fn~ which uses the ~functions/node_modules~ for
-    Javascript dependencies, outputs the compiled Javascript to
-    ~functions/index.js~ and identify the exported code via its symbol.
+We add a new build ~:fn~ which uses the ~functions/node_modules~ for
+Javascript dependencies, outputs the compiled Javascript to
+~functions/index.js~ and identify the exported code via its symbol.
 
-    Finally, we can compile our code by running the following.
+Finally, we can compile our code by running the following.
 
-    #+begin_src sh
-      npx shadow-cljs compile :fn
-    #+end_src
+#+begin_src sh
+npx shadow-cljs compile :fn
+#+end_src
 
-    This will output our compiled code to ~functions/index.js~ ready to be tested
-    using the Firebase emulators or deployed.
+This will output our compiled code to ~functions/index.js~ ready to be tested
+using the Firebase emulators or deployed.
 
 *** References
 
-    [[https://github.com/josephmr/clojurescript-firebase-functions][Full Code on Github]]
-    
-    [[https://github.com/jacobobryant/mystery-cows][Helpful example from Jacob O'Bryant]]
+[[https://github.com/josephmr/clojurescript-firebase-functions][Full Code on Github]]
+
+[[https://github.com/jacobobryant/mystery-cows][Helpful example from Jacob O'Bryant]]

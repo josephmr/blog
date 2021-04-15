@@ -1,6 +1,6 @@
 +++
 title = "Firebase Functions in ClojureScript"
-author = ["fortruce"]
+author = ["Joseph Rollins"]
 description = "Use ClojureScript to write your Firebase Functions."
 date = 2021-04-12
 categories = ["clojurescript"]
@@ -22,8 +22,8 @@ to write them in ClojureScript and compile to Javascript pretty easily.
 
 ## Create a shadow-cljs Project {#create-a-shadow-cljs-project}
 
-To get started we will initialize a new Shadow CLJS project. Shadow CLJS
-(shadow-cljs) is responsible for compiling our ClojureScript and leveraging
+To get started we will initialize a new shadow cljs project. shadow cljs
+(shadow-cljs) is responsible for compiling our clojurescript and leveraging
 existing Javascript libraries (e.g. firebase-functions).
 
 ```bash
@@ -33,7 +33,7 @@ npx create-cljs-project echo
 This should generate the following project for us:
 
 ```sh
-➜  src tree -I node_modules echo
+➜ src tree -I node_modules echo
 echo
 ├── package.json
 ├── package-lock.json
@@ -71,6 +71,8 @@ function we deploy to Firebase.
   (:require ["firebase-functions" :as functions]
             ["firebase-admin" :as admin]))
 
+(defonce init (.initializeApp admin))
+
 (defn echo
   "Echo the passed in query parameters merged with the current time"
   [req res]
@@ -106,19 +108,17 @@ ClojureScript. Edit the `shadow-cljs.edn` file to match the following.
 
 ```clojure
 {:source-paths
- ["src/dev"
-  "src/main"
-  "src/test"]
+ ["src/main"]
 
  :dependencies
  []
 
  :builds
- {:fn {:target           :node-library
-       :js-options       {:js-package-dirs ["functions/node_modules"]}
+ {:fn {:target :node-library
+       :js-options {:js-package-dirs ["functions/node_modules"]}
        :compiler-options {:infer-externs :auto}
-       :output-to        "functions/index.js"
-       :exports-var      echo.fn/exports}}}
+       :output-to "functions/index.js"
+       :exports-var echo.fn/exports}}}
 ```
 
 We add a new build `:fn` which uses the `functions/node_modules` for
